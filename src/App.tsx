@@ -22,51 +22,67 @@ const INITIAL_PROJECTS: Project[] = [
     id: 'line-tracing',
     title: 'Line Tracing Robot',
     description: 'Autonomous line-follower using IR-sensor feedback arrays.',
-    code: `// Line Follower Arduino Code
-const int leftSensor = 2;
-const int rightSensor = 3;
-const int EN_A = 5; // Left Motor Speed
-const int EN_B = 6; // Right Motor Speed
+    code: `int leftWheel = 2;
+int leftWheelSpeed = 5;
+int rightWheel = 4;
+int rightWheelSpeed = 6;
 
+int sensorLeft = A0;
+int sensorMid = A1;
+int sensorRight = A2;
+int threshold = 300;
+
+int speed = 60;
+int lastTurn = 0;
 void setup() {
-  pinMode(leftSensor, INPUT);
-  pinMode(rightSensor, INPUT);
-  Serial.begin(9600);
+  pinMode(leftWheel, OUTPUT);
+  pinMode(leftWheelSpeed, OUTPUT);
+  pinMode(rightWheel, OUTPUT);
+  pinMode(rightWheelSpeed, OUTPUT);
 }
-
 void loop() {
-  int L = digitalRead(leftSensor);
-  int R = digitalRead(rightSensor);
+  int sensorValueLeft = analogRead(sensorLeft);
+  int sensorValueMid = analogRead(sensorMid);
+  int sensorValueRight = analogRead(sensorRight);
+  bool L = sensorValueLeft > threshold;
+  bool M = sensorValueMid > threshold;
+  bool R = sensorValueRight > threshold;
 
-  if (L == LOW && R == LOW) {
-    forward();
-  } else if (L == HIGH && R == LOW) {
-    turnLeft();
-  } else if (L == LOW && R == HIGH) {
-    turnRight();
+  if (M) {
+    moveForward();
+  } else if (L && !R) {
+    rotateRight();
+    lastTurn = -1;
+  } else if (!L && R) {
+    rotateLeft();
+    lastTurn = 1;
   } else {
-    stop();
+    if (lastTurn == 1) rotateLeft();
+    else if (lastTurn == -1) rotateRight();
+    else stop();
   }
 }
-
-void forward() {
-  analogWrite(EN_A, 180);
-  analogWrite(EN_B, 180);
-}
-
-void turnLeft() {
-  analogWrite(EN_A, 100);
-  analogWrite(EN_B, 200);
-}
-
-void turnRight() {
-  analogWrite(EN_A, 200);
-  analogWrite(EN_B, 100);
-}
-
 void stop() {
-  analogWrite(EN_A, 0);
-  analogWrite(EN_B, 0);
+  analogWrite(leftWheelSpeed, 0);
+  analogWrite(rightWheelSpeed, 0);
+}
+void rotateRight() {
+  digitalWrite(leftWheel, HIGH);
+  analogWrite(leftWheelSpeed, 20);
+  digitalWrite(rightWheel, LOW);
+  analogWrite(rightWheelSpeed, speed);
+}
+void moveForward() {
+  digitalWrite(leftWheel, HIGH);
+  analogWrite(leftWheelSpeed, speed);
+  digitalWrite(rightWheel, LOW);
+  analogWrite(rightWheelSpeed, speed);
+}
+void rotateLeft() {
+  digitalWrite(leftWheel, LOW);
+  analogWrite(leftWheelSpeed, speed);
+  digitalWrite(rightWheel, HIGH);
+  analogWrite(rightWheelSpeed, 20);
 }`,
     notes: 'CALIBRATION: Ensure sensors are 10mm from the ground. Tune motor speeds (EN_A/B) for battery voltage drops.',
     icon: <Zap className="w-6 h-6" />
@@ -75,27 +91,156 @@ void stop() {
     id: 'maze-solving',
     title: 'Maze Solver 1.0',
     description: 'PID-controlled wall following logic for complex pathfinding.',
-    code: `// Maze Solver - Left Hand Rule
-#include <NewPing.h>
+    code: `#include <Servo.h>
+// ================= MOTOR PINS =================
+int leftWheel  = 2;
+int leftWheelSpeed  = 5;
+int rightWheel = 4;
+int rightWheelSpeed = 6;
+// ================= TUNABLE/CALIBRATION ===========
+int speed = 80;
+int clearDistance = 25;     // Safe to move forward
+int deadEndLimit  = 20;     // Too close on both sides
+// ================= ULTRASONIC SENSOR =================
+int trigPin = 12;
+int echoPin = 13;
+// ================= SERVO =================
+Servo scanner;
+// ================= TURN MEMORY (CONSTANT) =================
+// 0 = no direction yet
+// 1 = turning left
+// -1 = turning right
+int chosenDirection = 0;
+int turnCount = 0;
+int maxTurns  = 6;
 
-const int TRIG = 12;
-const int ECHO = 11;
-NewPing sonar(TRIG, ECHO, 200);
+// ================= FUNCTION: GET DISTANCE =================
+float getDistance() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
 
-void loop() {
-  unsigned int dist = sonar.ping_cm();
-  
-  if (dist < 15) {
-    // Escape maneuver
-    handleObstacle();
-  } else {
-    navigatePath();
-  }
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+
+  digitalWrite(trigPin, LOW);
+  float distance = pulseIn(echoPin, HIGH) / 58.0;
+  delay(10);
+  return distance;
 }
 
-void handleObstacle() {
-  backUp();
-  rotateRight(90);
+// ================= SETUP =================
+void setup() {
+  Serial.begin(9600);
+  pinMode(leftWheel, OUTPUT);
+  pinMode(leftWheelSpeed, OUTPUT);
+  pinMode(rightWheel, OUTPUT);
+  pinMode(rightWheelSpeed, OUTPUT);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  scanner.attach(10); //YOU CAN CHANGE THIS IF YOU CHANGED YOUR SERVO PIN(default D10) 
+  scanner.write(90); // Center position
+}
+// ================= MAIN LOOP =================
+void loop() {
+  float frontDistance = getDistance();
+  // ===== PATH IS CLEAR =====
+  if (frontDistance > clearDistance) {
+    chosenDirection = 0;
+    turnCount = 0;
+    moveForward();
+    delay(10);
+    return;
+  }
+  // ===== OBSTACLE DETECTED =====
+  stopMotors();
+  delay(300);
+
+  float leftDistance = 0;
+  float rightDistance = 0;
+  // ===== CHECK BOTH SIDES (ONLY ONCE) =====
+  if (chosenDirection == 0) {
+    // Look LEFT
+    scanner.write(150);
+    delay(500);
+    leftDistance = getDistance();
+    // Look RIGHT
+    scanner.write(30);
+    delay(500);
+    rightDistance = getDistance();
+    // Return to CENTER
+    scanner.write(90);
+    delay(300);
+    // ===== DEAD END =====
+    if (leftDistance < deadEndLimit && rightDistance < deadEndLimit) {
+      escapeDeadEnd();
+      return;
+    }
+    // ===== CHOOSE BEST DIRECTION =====
+    if (leftDistance > rightDistance) {
+      chosenDirection = 1;
+    } else {
+      chosenDirection = -1;
+    }
+    turnCount = 0;
+  }
+  // ===== TOO MANY TURNS (STUCK) =====
+  if (turnCount >= maxTurns) {
+    escapeDeadEnd();
+    chosenDirection = 0;
+    turnCount = 0;
+    return;
+  }
+  // ===== EXECUTE TURN =====
+  if (chosenDirection == 1) {
+    turnLeft();
+    delay(400);
+  } else {
+    turnRight();
+    delay(400);
+  }
+  turnCount++;
+  // Move forward a bit after turning
+  moveForward();
+  delay(300);
+}
+
+// ================= ESCAPE FUNCTION =================
+void escapeDeadEnd() {
+  moveBackward();
+  delay(800);
+  turnRight();
+  delay(900);
+  stopMotors();
+  delay(200);
+}
+// ================= MOTOR FUNCTIONS =================
+void moveForward() {
+  digitalWrite(leftWheel, HIGH);
+  analogWrite(leftWheelSpeed, speed);
+  digitalWrite(rightWheel, LOW);
+  analogWrite(rightWheelSpeed, speed);
+}
+void moveBackward() {
+  digitalWrite(leftWheel, LOW);
+  analogWrite(leftWheelSpeed, speed);
+  digitalWrite(rightWheel, HIGH);
+  analogWrite(rightWheelSpeed, speed);
+}
+void turnLeft() {
+  digitalWrite(leftWheel, LOW);
+  analogWrite(leftWheelSpeed, speed);
+  digitalWrite(rightWheel, LOW);
+  analogWrite(rightWheelSpeed, speed);
+}
+void turnRight() {
+  digitalWrite(leftWheel, HIGH);
+  analogWrite(leftWheelSpeed, speed);
+  digitalWrite(rightWheel, HIGH);
+  analogWrite(rightWheelSpeed, speed);
+}
+void stopMotors() {
+  analogWrite(leftWheelSpeed, 0);
+  analogWrite(rightWheelSpeed, 0);
 }`,
     notes: 'The Left-Hand-Rule (LHR) is effective for mazes without loops. For cyclic mazes, implement a flood-fill algorithm.',
     icon: <Cpu className="w-6 h-6" />
