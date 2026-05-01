@@ -67,9 +67,9 @@ void stop() {
   analogWrite(rightWheelSpeed, 0);
 }
 void rotateRight() {
-  digitalWrite(leftWheel, LOW);
+  digitalWrite(leftWheel, HIGH);
   analogWrite(leftWheelSpeed, 0);
-  digitalWrite(rightWheel, HIGH);
+  digitalWrite(rightWheel, LOW);
   analogWrite(rightWheelSpeed, speed);
 }
 void moveForward() {
