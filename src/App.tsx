@@ -83,7 +83,7 @@ void rotateLeft() {
   analogWrite(leftWheelSpeed, speed);
   digitalWrite(rightWheel, HIGH);
   analogWrite(rightWheelSpeed, 20);
-}`,
+}1`,
     notes: 'CALIBRATION: Ensure sensors are 10mm from the ground. Tune motor speeds (EN_A/B) for battery voltage drops.',
     icon: <Zap className="w-6 h-6" />
   },
