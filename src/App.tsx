@@ -253,7 +253,7 @@ void stop() {
       'kung hindi gumagalaw si ultrasonic sensor try using other pins, like D10, D9, D7 etc, or ask sir Cris for guidance',
       'sa direction ni wheels check you direction yung naka HIGH and LOW',
       'sa may something sa reverse or d maka reverse adjust lang yung function na escapeDeadEnd, visualize kung ilang beses dapat mag rotate para maka lingon uli sa likod',
-      'again control the speed 255 is the maximum speed but its always advisable na itodo ito lalo kung hnd ganun ka sturdy si maze'
+      'again control the speed 255 is the maximum speed but its NOT always advisable na itodo ito lalo kung hnd ganun ka sturdy si maze'
     ],
     icon: <Cpu className="w-6 h-6" />
   }
