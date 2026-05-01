@@ -11,7 +11,7 @@ interface Project {
   title: string;
   description: string;
   code: string;
-  notes: string;
+  notes: string | string[];
   icon: React.ReactNode;
 }
 
@@ -84,13 +84,20 @@ void rotateLeft() {
   digitalWrite(rightWheel, HIGH);
   analogWrite(rightWheelSpeed, 20);
 }1`,
-    notes: 'CALIBRATION: Ensure sensors are 10mm from the ground. Tune motor speeds (EN_A/B) for battery voltage drops.',
+    notes: [
+            'always make sure na yung speed is tama lang para maka stop or maka rotate on time si robot, look at the track and think if kakayanin ba sa current setup ng speed and rotation sa code',
+      'try tapping the sensors it should turn red every tinatakpan pag hindi paadjust kay sir Cris kung pwede pa i calibrate',
+      'sa 2 student na nagloloko yung robot, upon checking kay Avril sira si ultrasonic sensor, pero napalitan naman ng spare so it should be working now, kay Xian, We tried changing the ultrasonic sensors but yung sira nya talaga is sa expansion board na, so most probably hihiram siya for maze, sa line trace no need',
+      'sa mga nasiraan expansion board you can borrow from a friend, d naman mag mamatter si hardware since we all have the same kit, sa code tlaga magkakaalaman',
+      'sa mga nageerror yung code pagupload, make sure na magkaibang sketch yung line and maze, ginawa lng natin sila sa na same file different tabs para mas madali macopy functions sa other file, pero when uploading it should be separate file'
+
+    ],
     icon: <Zap className="w-6 h-6" />
   },
   {
     id: 'maze-solving',
-    title: 'Maze Solver 1.0',
-    description: 'PID-controlled wall following logic for complex pathfinding.',
+    title: 'Maze Solver',
+    description: 'Obstacle-avoiding / Reactive maze solver',
     code: `#include <Servo.h>
 // ================= MOTOR PINS =================
 int leftWheel  = 2;
@@ -105,7 +112,7 @@ int deadEndLimit  = 20;     // Too close on both sides
 int trigPin = 12;
 int echoPin = 13;
 // ================= SERVO =================
-Servo scanner;
+Servo myServo;
 // ================= TURN MEMORY (CONSTANT) =================
 // 0 = no direction yet
 // 1 = turning left
@@ -115,7 +122,7 @@ int turnCount = 0;
 int maxTurns  = 6;
 
 // ================= FUNCTION: GET DISTANCE =================
-float getDistance() {
+float checkDistance() {
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
 
@@ -130,19 +137,18 @@ float getDistance() {
 
 // ================= SETUP =================
 void setup() {
-  Serial.begin(9600);
   pinMode(leftWheel, OUTPUT);
   pinMode(leftWheelSpeed, OUTPUT);
   pinMode(rightWheel, OUTPUT);
   pinMode(rightWheelSpeed, OUTPUT);
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
-  scanner.attach(10); //YOU CAN CHANGE THIS IF YOU CHANGED YOUR SERVO PIN(default D10) 
-  scanner.write(90); // Center position
+  myServo.attach(10); //YOU CAN CHANGE THIS IF YOU CHANGED YOUR SERVO PIN(default D10) 
+  myServo.write(90); // Center position
 }
 // ================= MAIN LOOP =================
 void loop() {
-  float frontDistance = getDistance();
+  float frontDistance = checkDistance();
   // ===== PATH IS CLEAR =====
   if (frontDistance > clearDistance) {
     chosenDirection = 0;
@@ -152,7 +158,7 @@ void loop() {
     return;
   }
   // ===== OBSTACLE DETECTED =====
-  stopMotors();
+  stop();
   delay(300);
 
   float leftDistance = 0;
@@ -160,15 +166,15 @@ void loop() {
   // ===== CHECK BOTH SIDES (ONLY ONCE) =====
   if (chosenDirection == 0) {
     // Look LEFT
-    scanner.write(150);
+    myServo.write(150);
     delay(500);
-    leftDistance = getDistance();
+    leftDistance = checkDistance();
     // Look RIGHT
-    scanner.write(30);
+    myServo.write(30);
     delay(500);
-    rightDistance = getDistance();
+    rightDistance = checkDistance();
     // Return to CENTER
-    scanner.write(90);
+    myServo.write(90);
     delay(300);
     // ===== DEAD END =====
     if (leftDistance < deadEndLimit && rightDistance < deadEndLimit) {
@@ -192,10 +198,10 @@ void loop() {
   }
   // ===== EXECUTE TURN =====
   if (chosenDirection == 1) {
-    turnLeft();
+    rotateLeft();
     delay(400);
   } else {
-    turnRight();
+    rotateRight();
     delay(400);
   }
   turnCount++;
@@ -208,9 +214,9 @@ void loop() {
 void escapeDeadEnd() {
   moveBackward();
   delay(800);
-  turnRight();
+  rotateRight();
   delay(900);
-  stopMotors();
+  stop();
   delay(200);
 }
 // ================= MOTOR FUNCTIONS =================
@@ -226,23 +232,29 @@ void moveBackward() {
   digitalWrite(rightWheel, HIGH);
   analogWrite(rightWheelSpeed, speed);
 }
-void turnLeft() {
+void rotateLeft() {
   digitalWrite(leftWheel, LOW);
   analogWrite(leftWheelSpeed, speed);
   digitalWrite(rightWheel, LOW);
   analogWrite(rightWheelSpeed, speed);
 }
-void turnRight() {
+void rotateRight() {
   digitalWrite(leftWheel, HIGH);
   analogWrite(leftWheelSpeed, speed);
   digitalWrite(rightWheel, HIGH);
   analogWrite(rightWheelSpeed, speed);
 }
-void stopMotors() {
+void stop() {
   analogWrite(leftWheelSpeed, 0);
   analogWrite(rightWheelSpeed, 0);
 }`,
-    notes: 'The Left-Hand-Rule (LHR) is effective for mazes without loops. For cyclic mazes, implement a flood-fill algorithm.',
+    notes: [
+      'sa maze you can adjust the clearDistance and deadEndLimit, note that the value is in cm, so visualize lang kung kakayanin ba umikot ni robot sa maze',
+      'kung hindi gumagalaw si ultrasonic sensor try using other pins, like D10, D9, D7 etc, or ask sir Cris for guidance',
+      'sa direction ni wheels check you direction yung naka HIGH and LOW',
+      'sa may something sa reverse or d maka reverse adjust lang yung function na escapeDeadEnd, visualize kung ilang beses dapat mag rotate para maka lingon uli sa likod',
+      'again control the speed 255 is the maximum speed but its always advisable na itodo ito lalo kung hnd ganun ka sturdy si maze'
+    ],
     icon: <Cpu className="w-6 h-6" />
   }
 ];
@@ -263,6 +275,9 @@ const CodeSection = ({ project, onUpdateCode, onUpdateNotes, isAdmin }: {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const noteLines = Array.isArray(project.notes) ? project.notes : project.notes.split('\n');
+  const hasNotes = noteLines.some((line) => line.trim().length > 0);
 
   return (
     <motion.div 
@@ -302,30 +317,26 @@ const CodeSection = ({ project, onUpdateCode, onUpdateNotes, isAdmin }: {
             {isEditing && isAdmin ? (
               <textarea
                 className="w-full flex-1 bg-transparent text-sm leading-relaxed outline-none resize-none font-bold text-slate-100 placeholder:text-navy-700"
-                value={project.notes}
+                value={typeof project.notes === 'string' ? project.notes : project.notes.join('\n')}
                 onChange={(e) => onUpdateNotes(project.id, e.target.value)}
                 placeholder="Add secret tips or lecture notes here..."
               />
             ) : (
               <div className="text-sm leading-relaxed text-slate-300">
-                {project.notes.split('\n').map((line, i) => (
-                  <p key={i} className="mb-4 last:mb-0 relative pl-10 group">
-                    <span className="absolute left-0 top-0 text-[10px] bg-gold-400 text-navy-950 px-1 font-mono font-bold group-hover:bg-gold-500 transition-colors">
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-                    {line}
-                  </p>
-                ))}
-                {project.notes === '' && <span className="text-navy-700 italic">No notes added yet.</span>}
+                {hasNotes ? (
+                  noteLines.map((line, i) => (
+                    <p key={i} className="mb-4 last:mb-0 relative pl-10 group">
+                      <span className="absolute left-0 top-0 text-[10px] bg-gold-400 text-navy-950 px-1 font-mono font-bold group-hover:bg-gold-500 transition-colors">
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                      {line}
+                    </p>
+                  ))
+                ) : (
+                  <span className="text-navy-700 italic">No notes added yet.</span>
+                )}
               </div>
             )}
-            <div className="mt-8 border-t-2 border-gold-400/20 pt-4">
-              <p className="text-[10px] uppercase font-black tracking-widest text-gold-400/50 mb-2 italic">Security Tag</p>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-gold-400 rounded-full animate-pulse" />
-                <span className="font-mono text-[10px] font-bold text-gold-400/70">{project.id.toUpperCase()}_PROTOCOL_V1</span>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -439,65 +450,22 @@ export default function App() {
             animate={{ opacity: 1, scale: 1 }}
             className="text-6xl md:text-9xl font-black tracking-tighter leading-none uppercase italic text-gold-400 break-words"
           >
-            Robotics Lab
+            TIPSSSSS....
           </motion.h1>
           <div className="mt-8 space-y-2">
             <p className="text-sm font-bold tracking-[0.4em] uppercase text-gold-600">
-              Module 04: Autonomous Navigation & Control
+              Para sa competition :), GOODLUCK!
             </p>
-            {isAdmin && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gold-400 text-navy-950 text-[10px] font-black uppercase tracking-widest">
-                <ShieldCheck className="w-3 h-3" /> Restricted Admin Access
-              </span>
-            )}
           </div>
         </div>
         <div className="text-right flex flex-col items-end gap-2">
           <div className="bg-gold-400 text-navy-950 px-5 py-2 font-mono text-xs uppercase font-black tracking-widest shadow-[4px_4px_0px_#d97706]">
-            INST: DR_ARIS_S26
-          </div>
-          <div className="text-[10px] font-black uppercase tracking-[0.3em] text-gold-600/50">
-            SECURED ARCHIVE / SESSION 12
+            - sir Francis
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 relative z-10">
-        {/* Intro Section */}
-        <section className="grid grid-cols-12 gap-8 mb-24">
-          <div className="col-span-12 lg:col-span-12">
-            <h2 className="text-2xl font-black uppercase mb-6 underline decoration-4 underline-offset-8 text-gold-400">
-              Lab Briefing Archive
-            </h2>
-            <div className="relative group bg-navy-900 border-2 border-gold-400 p-8 min-h-[140px] flex flex-col shadow-2xl">
-              <div className="flex items-center justify-between mb-8">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gold-600 italic">Broadcast Signal Active</label>
-                {isAdmin && (
-                  <button 
-                    onClick={() => setIsEditingGlobal(!isEditingGlobal)}
-                    className="text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-gold-400 text-navy-950 hover:bg-white transition-colors"
-                  >
-                    {isEditingGlobal ? 'Sync Broadcast' : 'Modify Signal'}
-                  </button>
-                )}
-              </div>
-              
-              {isEditingGlobal && isAdmin ? (
-                <textarea 
-                  className="w-full flex-1 bg-transparent text-xl leading-relaxed outline-none resize-none font-bold italic text-white placeholder:text-navy-800"
-                  value={generalNotes}
-                  onChange={(e) => setGeneralNotes(e.target.value)}
-                  autoFocus
-                />
-              ) : (
-                <p className="text-xl md:text-3xl font-bold leading-tight italic text-slate-100 max-w-5xl border-l-4 border-gold-400 pl-10 py-2">
-                  {generalNotes}
-                </p>
-              )}
-            </div>
-          </div>
-        </section>
-
         {/* Projects Grid */}
         <div className="space-y-40">
           {projects.map((project) => (
@@ -569,23 +537,6 @@ export default function App() {
             </div>
           </section>
         )}
-
-        {/* Footer Decorative */}
-        <footer className="mt-40 pt-16 border-t-8 border-gold-400 flex flex-col md:flex-row justify-between items-end gap-12 overflow-hidden bg-black/40 p-8 -mx-4 md:mx-0">
-          <div className="space-y-4">
-            <h3 className="text-6xl font-black uppercase italic tracking-tighter opacity-10 text-gold-400 select-none">GOLDEN_CORE_S26</h3>
-            <p className="text-xs font-black uppercase tracking-widest text-gold-600 flex items-center gap-3">
-              <span className="w-2 h-2 bg-gold-400 rounded-full animate-pulse" />
-              ARCHIVE_STATUS: NODE_SECURED_0x4F
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {[1, 0.8, 0.6, 0.4].map((op, i) => (
-              <div key={i} className="w-12 h-12 bg-gold-400" style={{ opacity: op }} />
-            ))}
-            <div className="w-12 h-12 border-2 border-gold-400 flex items-center justify-center font-black text-gold-400">012</div>
-          </div>
-        </footer>
       </main>
     </div>
   );
