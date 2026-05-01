@@ -68,7 +68,7 @@ void stop() {
 }
 void rotateRight() {
   digitalWrite(leftWheel, HIGH);
-  analogWrite(leftWheelSpeed, 20);
+  analogWrite(leftWheelSpeed, 0);
   digitalWrite(rightWheel, LOW);
   analogWrite(rightWheelSpeed, speed);
 }
@@ -82,8 +82,8 @@ void rotateLeft() {
   digitalWrite(leftWheel, LOW);
   analogWrite(leftWheelSpeed, speed);
   digitalWrite(rightWheel, HIGH);
-  analogWrite(rightWheelSpeed, 20);
-}1`,
+  analogWrite(rightWheelSpeed, 0);
+}`,
     notes: [
             'always make sure na yung speed is tama lang para maka stop or maka rotate on time si robot, look at the track and think if kakayanin ba sa current setup ng speed and rotation sa code',
       'try tapping the sensors it should turn red every tinatakpan pag hindi paadjust kay sir Cris kung pwede pa i calibrate',
@@ -456,6 +456,14 @@ export default function App() {
             <p className="text-sm font-bold tracking-[0.4em] uppercase text-gold-600">
               Para sa competition :), GOODLUCK!
             </p>
+            <a 
+              href="/guideline.pdf" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-block mt-4 px-6 py-2 bg-gold-400 text-navy-950 font-black uppercase tracking-widest text-xs hover:bg-gold-500 transition-colors"
+            >
+              View PDF Guideline
+            </a>
           </div>
         </div>
         <div className="text-right flex flex-col items-end gap-2">
