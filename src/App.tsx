@@ -67,9 +67,9 @@ void stop() {
   analogWrite(rightWheelSpeed, 0);
 }
 void rotateRight() {
-  digitalWrite(leftWheel, HIGH);
+  digitalWrite(leftWheel, LOW);
   analogWrite(leftWheelSpeed, 0);
-  digitalWrite(rightWheel, LOW);
+  digitalWrite(rightWheel, HIGH);
   analogWrite(rightWheelSpeed, speed);
 }
 void moveForward() {
@@ -79,9 +79,9 @@ void moveForward() {
   analogWrite(rightWheelSpeed, speed);
 }
 void rotateLeft() {
-  digitalWrite(leftWheel, LOW);
+  digitalWrite(leftWheel, HIGH);
   analogWrite(leftWheelSpeed, speed);
-  digitalWrite(rightWheel, HIGH);
+  digitalWrite(rightWheel, LOW);
   analogWrite(rightWheelSpeed, 0);
 }`,
     notes: [
