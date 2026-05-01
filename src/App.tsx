@@ -462,7 +462,7 @@ export default function App() {
               rel="noopener noreferrer"
               className="inline-block mt-4 px-6 py-2 bg-gold-400 text-navy-950 font-black uppercase tracking-widest text-xs hover:bg-gold-500 transition-colors"
             >
-              Robot_Competition_Guidelines_and_Mechanics.pdf
+              Competition_Guidelines_&_Mechanics.pdf
             </a>
           </div>
         </div>
