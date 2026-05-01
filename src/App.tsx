@@ -468,7 +468,7 @@ export default function App() {
         </div>
         <div className="text-right flex flex-col items-end gap-2">
           <div className="bg-gold-400 text-navy-950 px-5 py-2 font-mono text-xs uppercase font-black tracking-widest shadow-[4px_4px_0px_#d97706]">
-            - sir Francis & Cris
+            - sir Francis & Sir Cris
           </div>
         </div>
       </header>
