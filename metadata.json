@@ -1,0 +1,6 @@
+{
+  "name": "Arduino Robotics Lab",
+  "description": "An educational platform for students to access robotics notes and Arduino source codes for Line Tracing and Maze Solving projects.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
