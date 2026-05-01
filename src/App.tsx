@@ -457,7 +457,7 @@ export default function App() {
               Para sa competition :), GOODLUCK!
             </p>
             <a 
-              href="/guideline.pdf" 
+              href="/public/guideline.pdf" 
               target="_blank" 
               rel="noopener noreferrer"
               className="inline-block mt-4 px-6 py-2 bg-gold-400 text-navy-950 font-black uppercase tracking-widest text-xs hover:bg-gold-500 transition-colors"
@@ -468,7 +468,7 @@ export default function App() {
         </div>
         <div className="text-right flex flex-col items-end gap-2">
           <div className="bg-gold-400 text-navy-950 px-5 py-2 font-mono text-xs uppercase font-black tracking-widest shadow-[4px_4px_0px_#d97706]">
-            - sir Francis
+            - sir Francis & Cris
           </div>
         </div>
       </header>
