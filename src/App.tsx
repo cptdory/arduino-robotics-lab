@@ -457,12 +457,12 @@ export default function App() {
               Para sa competition :), GOODLUCK!
             </p>
             <a 
-              href="/public/guideline.pdf" 
+              href="/Robot_Competition_Guidelines_and_Mechanics.pdf" 
               target="_blank" 
               rel="noopener noreferrer"
               className="inline-block mt-4 px-6 py-2 bg-gold-400 text-navy-950 font-black uppercase tracking-widest text-xs hover:bg-gold-500 transition-colors"
             >
-              View PDF Guideline
+              Robot_Competition_Guidelines_and_Mechanics.pdf
             </a>
           </div>
         </div>
